@@ -9,3 +9,4 @@
     (2) 브랜치 목록 : git branch '*'표시가 붙어있으면 현재 브랜치
     (3) 브랜치 전환 : git checkout "전환할 브랜치 이름"
     (4) 브랜치 생성 후 전환 :  git checkout -b "생성 후 전환할 브랜치 이름"
+    (5) 브랜치 최신화 : git fetch -p
