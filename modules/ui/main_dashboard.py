@@ -1,6 +1,6 @@
 # modules/main_dashboard.py
 import streamlit as st
-from .mock_data import get_mock_market_cards
+from ..data.mock_data import get_mock_market_cards
 
 
 def render_main_dashboard() -> None:
