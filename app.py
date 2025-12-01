@@ -10,17 +10,23 @@ from modules.ui.chat_ui import (
     inject_chat_styles,
     render_chat_fab_and_panel,
 )
+from modules.ui.auth import render_login_page, render_logout_box
+from modules.ui.top_nav import render_top_nav
 
 
 def main():
-    # 페이지 기본 설정
     st.set_page_config(
         page_title="AI ETF·배당주 투자 도우미",
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
-    # 공통 스타일 (사이드바 폭 조정)
+    # 로그인 체크
+    logged_in = render_login_page()
+    if not logged_in:
+        return
+
+    # 공통 스타일
     st.markdown(
         """
         <style>
@@ -33,13 +39,19 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # 챗봇 상태/스타일 초기화
+    # 상단 네비바 렌더링 (홈 / 피드 / 주식 골라보기 / 내 계좌)
+    active_top_tab = render_top_nav()
+    # ↑ 필요하면 이 값을 이용해 페이지 내에서 서브 콘텐츠 분기 가능
+
+    # 챗봇 상태/스타일
     init_chat_state()
     inject_chat_styles()
 
     # 사이드바 메뉴
     with st.sidebar:
         st.title("📂 메뉴")
+        render_logout_box()
+
         page = st.radio(
             "이동할 페이지를 선택하세요",
             (
@@ -64,7 +76,7 @@ def main():
     elif page == "설정":
         render_settings_page()
 
-    # 화면 가장 마지막에 챗봇 FAB + 패널 렌더
+    # 플로팅 챗봇
     render_chat_fab_and_panel()
 
 
