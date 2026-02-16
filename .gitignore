@@ -2,6 +2,7 @@
 .venv/
 *.pyc
 __pycache__/
+*.egg-info/
 *.db
 
 # Environment
@@ -9,9 +10,22 @@ __pycache__/
 backend/.env
 
 # Node
-frontend/node_modules/
+node_modules/
 frontend/dist/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+.mcp.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+tutorial.txt
