@@ -1,0 +1,174 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ── Header ──────────────────────────────── */
+.header {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.symbolBadge {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.companyName {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sectorLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.priceSection {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.currentPrice {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.priceChange {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.up { color: var(--color-success); }
+.down { color: var(--color-danger); }
+
+/* ── Chart section ───────────────────────── */
+.chartSection {
+  margin-bottom: 24px;
+}
+
+/* ── Key Stats ───────────────────────────── */
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ── About section ───────────────────────── */
+.aboutCard {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ── Error state ─────────────────────────── */
+.errorCard {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.errorTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.errorMessage {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.backLink {
+  font-size: 14px;
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--accent-blue-hover);
+}
+
+/* ── Skeleton loading ────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, #2a3444 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeletonHeader {
+  height: 120px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+
+.skeletonChart {
+  height: 380px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+
+.skeletonStat {
+  height: 80px;
+}
