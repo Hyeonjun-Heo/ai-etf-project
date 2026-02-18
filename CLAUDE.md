@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**AI ETF & Dividend Stock Investment Assistant** — React 19 (TypeScript) + FastAPI monorepo web app. An AI agent-powered platform for stock/ETF investment strategy recommendation, analysis, and paper trading simulation. UI reference: [Toss Securities](https://www.tossinvest.com/) — dark theme, clean block layout, mobile-friendly card-based design.
+**AI ETF & Dividend Stock Investment Assistant** — React 19 (TypeScript) + FastAPI monorepo web app. AI agent-powered platform for stock/ETF investment strategy recommendation, analysis, and paper trading simulation. UI reference: [Toss Securities](https://www.tossinvest.com/) — dark theme, clean block layout, mobile-friendly card-based design.
 
 ## Development Commands
 
@@ -26,7 +26,6 @@ npm run lint         # eslint .
 - Swagger docs: `http://localhost:8000/docs`
 - SQLite DB auto-created on first backend startup via `Base.metadata.create_all` in lifespan
 - No test framework is set up yet (no pytest config, no vitest/jest)
-- Node.js 18.17.1 in use — upgrade to Node 20+ recommended
 
 ## Git Workflow
 
@@ -85,54 +84,73 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - All API endpoints: `/api/v1/` prefix
 - New backend routers must be registered in `api/router.py`
 
-## Current Status & Roadmap
+## Current Status
 
 ### Completed
 - Auth system: register, login, JWT refresh, `/me` endpoint
-- Market data API: indices (S&P 500, NASDAQ, Dow, VIX), top ETFs, chart history, market movers (gainers/losers)
-- Dashboard page: market overview cards, SPY chart with period selector, ETF ranking table, movers with tab switching, skeleton loading states
+- Market data API: indices (S&P 500, NASDAQ, Dow, VIX), top ETFs, chart history, market movers
+- Dashboard page: market overview cards, SPY chart with period selector, ETF ranking table, movers with tab switching, skeleton loading
 - Login & Register pages with form validation
+- Stock detail page scaffold (`/stock/:symbol`)
 
-### Phase 1 — Stock/ETF Detail & Search
-- **Stock/ETF detail page** (`/stock/:symbol`): price chart (1D/1W/1M/3M/1Y), key stats (market cap, P/E, dividend yield, 52w range), company overview, related ETFs
-- **Search**: global search bar in TopNav, search by ticker/name, recent searches, autocomplete suggestions
-- **Watchlist**: add/remove favorites, persist per user in DB, watchlist section on Dashboard
-
-### Phase 2 — Portfolio Recommendation (AI-powered)
-- **Investment profile survey**: risk tolerance, investment horizon, preferred sectors, monthly budget
-- **AI portfolio builder**: OpenAI agent analyzes profile → recommends ETF/stock allocation with rationale
-- **Portfolio detail view**: allocation pie chart, expected return/risk metrics, individual holding cards
-- **Rebalancing suggestions**: AI agent compares current vs target allocation, suggests trades
-
-### Phase 3 — Backtesting Engine
-- **Backtest configuration**: select tickers, set weights, define date range, initial capital
-- **Backend engine**: historical data via yfinance → calculate CAGR, MDD, Sharpe ratio, annual returns
-- **Results visualization**: cumulative return chart, drawdown chart, yearly performance table, benchmark comparison (vs SPY)
-- **AI analysis**: agent interprets backtest results, explains risk/return characteristics in plain language
-
-### Phase 4 — Paper Trading Simulation
-- **Virtual account**: starting balance (default $100,000), track cash + holdings
-- **Trade execution**: market buy/sell at real-time prices (yfinance), order history log
-- **Portfolio tracker**: current holdings, unrealized P&L, total return, allocation breakdown
-- **AI trade advisor**: agent evaluates proposed trades, warns about concentration risk, suggests position sizing
-
-### Phase 5 — AI Investment Coach (Chatbot)
-- **Floating chat widget**: bottom-right panel (like Toss Securities CS chat)
-- **Context-aware conversations**: agent can reference user's portfolio, backtest results, watchlist
-- **Capabilities**: explain investment concepts, analyze specific stocks/ETFs, compare strategies, interpret market news
-- **SSE streaming**: real-time token-by-token response via Server-Sent Events
-- **Conversation history**: persist per user, resumable across sessions
-
-### Phase 6 — Dashboard Enhancement & Polish
-- **Trending categories**: sector performance heatmap (like Toss's "지금 뜨는 카테고리")
-- **Investor trends**: popular stocks among platform users, most-watched ETFs
-- **Recently viewed**: track and display user's recently viewed stocks/ETFs
-- **Settings page**: notification preferences, display currency (USD/KRW), risk level defaults, account management
+### Next Up
+- Phase 1: Stock/ETF detail page (chart, stats, company overview), search with autocomplete, watchlist
+- Phase 2: AI portfolio recommendation (investment profile survey → OpenAI agent → allocation)
+- Phase 3: Backtesting engine (CAGR, MDD, Sharpe ratio, benchmark comparison)
+- Phase 4: Paper trading simulation (virtual account, trade execution, P&L tracking)
+- Phase 5: AI investment coach chatbot (SSE streaming, context-aware conversations)
+- Phase 6: Dashboard enhancement (trending categories, investor trends, settings page)
 
 ## Claude Usage Guide
-
 - Use TypeScript strict mode
 - All API endpoints must have tests
-- Follow the existing error handling patterns in `src/utils/errors.ts`
 - CLAUDE.md content must be written in English.
 - 코드 생성, 코드 리뷰, 설명, 오류 보고 등 모든 대화 응답은 한국어로 작성해 주세요.
+
+# AI ETF Project — Claude Rules
+
+## 1. Think First
+- List assumptions.
+- Confirm affected layer (backend or frontend).
+- If unclear → ask before coding.
+
+## 2. Minimal Changes Only
+- Touch only required files.
+- No refactors unless requested.
+- No formatting-only edits.
+- No new dependencies.
+
+## 3. Architecture Boundaries (Strict)
+
+Backend:
+- api/ → routers only
+- services/ → business logic
+- models/ → SQLAlchemy models
+- db/ → session & Base
+- data/ → external APIs (yfinance)
+
+Frontend:
+- api/ → Axios client only
+- pages/ → page components
+- components/ → reusable UI
+- stores/ → Zustand state
+- No hardcoded backend URLs (use Vite proxy /api)
+
+## 4. Execution Protocol
+
+For non-trivial tasks, respond with:
+
+- Assumptions:
+- Plan:
+- Changes:
+- Verification:
+- Files touched:
+
+## 5. Definition of Done
+
+Task is complete only if:
+- It runs without breaking:
+  - Backend (8000)
+  - Frontend (5173)
+- It respects folder boundaries
+- It includes verification steps

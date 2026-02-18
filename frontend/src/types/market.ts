@@ -31,6 +31,13 @@ export interface MoverItem {
   changePct: number
 }
 
+export interface IndexSparklineData {
+  points: ChartPoint[]
+  previousClose: number | null
+}
+
+export type IndexSparklines = Record<string, IndexSparklineData>
+
 export interface StockDetail {
   symbol: string
   name: string

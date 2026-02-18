@@ -1,6 +1,7 @@
 """yfinance wrapper with in-memory TTL cache."""
 
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import yfinance as yf
@@ -8,12 +9,14 @@ import pandas as pd
 
 _cache: dict[str, tuple[float, Any]] = {}
 CACHE_TTL = 300  # 5 minutes
+SPARKLINE_TTL = 30  # ✅ 스파크라인 전용 TTL (30초)
+SPARKLINE_WINDOW_MINUTES = 180  # ✅ 3시간 = 180분(1분봉 180개)
 
 
-def _get_cached(key: str) -> Any | None:
+def _get_cached(key: str, ttl: int = CACHE_TTL) -> Any | None:
     if key in _cache:
         ts, data = _cache[key]
-        if time.time() - ts < CACHE_TTL:
+        if time.time() - ts < ttl:
             return data
         del _cache[key]
     return None
@@ -26,10 +29,14 @@ def _set_cached(key: str, data: Any) -> None:
 # ── Index quotes ──────────────────────────────────────────────
 
 INDEX_SYMBOLS = {
+    "KRW=X": "달러/원",
+    "^IXIC": "나스닥",
+    "NQ=F": "나스닥100 선물",
     "^GSPC": "S&P 500",
-    "^IXIC": "NASDAQ",
-    "^DJI": "Dow Jones",
+    "^DJI": "다우존스",
     "^VIX": "VIX",
+    "^KS11": "코스피",
+    "^KQ11": "코스닥",
 }
 
 
@@ -66,6 +73,46 @@ def fetch_indices() -> list[dict]:
 
     _set_cached(cache_key, results)
     return results
+
+
+# ── Index sparklines (today 1-min intraday + previous close) ──
+
+def _fetch_one_sparkline(symbol: str) -> dict:
+    """Fetch recent 3h 1m chart + previous close for a single symbol."""
+    try:
+        ticker = yf.Ticker(symbol)
+        prev_close = ticker.fast_info.previous_close
+        prev_close = round(prev_close, 2) if prev_close is not None else None
+
+        hist: pd.DataFrame = ticker.history(period="1d", interval="1m")
+        if hist is None or hist.empty:
+            return {"points": [], "previousClose": prev_close}
+
+        # ✅ 최근 3시간(=180개)만 사용
+        hist = hist.tail(SPARKLINE_WINDOW_MINUTES)
+
+        points = [
+            {"date": idx.strftime("%H:%M"), "close": round(float(row["Close"]), 2)}
+            for idx, row in hist.iterrows()
+        ]
+        return {"points": points, "previousClose": prev_close}
+    except Exception:
+        return {"points": [], "previousClose": None}
+
+
+def fetch_index_sparklines() -> dict[str, dict]:
+    cache_key = "index_sparklines"
+    cached = _get_cached(cache_key, ttl=SPARKLINE_TTL)  # ✅ 30초 TTL
+    if cached is not None:
+        return cached
+
+    symbols = list(INDEX_SYMBOLS.keys())
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(_fetch_one_sparkline, symbols))
+
+    result = dict(zip(symbols, results))
+    _set_cached(cache_key, result)
+    return result
 
 
 # ── Top ETFs ──────────────────────────────────────────────────

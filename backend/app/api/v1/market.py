@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.services.market_service import (
     get_chart,
+    get_index_sparklines,
     get_indices,
     get_movers,
     get_stock_detail,
@@ -14,6 +15,11 @@ router = APIRouter(prefix="/market", tags=["market"])
 @router.get("/indices")
 async def indices():
     return get_indices()
+
+
+@router.get("/index-sparklines")
+async def index_sparklines():
+    return get_index_sparklines()
 
 
 @router.get("/top-etfs")

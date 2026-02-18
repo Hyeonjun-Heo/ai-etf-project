@@ -2,6 +2,7 @@
 
 from app.data.market_data import (
     fetch_chart,
+    fetch_index_sparklines,
     fetch_indices,
     fetch_movers,
     fetch_stock_detail,
@@ -23,6 +24,10 @@ def get_chart(symbol: str = "SPY", period: str = "6mo") -> list[dict]:
 
 def get_movers() -> dict[str, list[dict]]:
     return fetch_movers()
+
+
+def get_index_sparklines() -> dict[str, list[dict]]:
+    return fetch_index_sparklines()
 
 
 def get_stock_detail(symbol: str) -> dict | None:

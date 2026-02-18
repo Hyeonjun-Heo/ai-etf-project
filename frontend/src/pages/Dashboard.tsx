@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import apiClient from '../api/client'
 import MarketChart from '../components/charts/MarketChart'
-import type { ChartPoint, EtfQuote, IndexQuote, MoverItem, Movers } from '../types/market'
+import IndexTickerBar from '../components/common/IndexTickerBar'
+import type { ChartPoint, EtfQuote, IndexQuote, IndexSparklines, Movers } from '../types/market'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const [indices, setIndices] = useState<IndexQuote[]>([])
+  const [sparklines, setSparklines] = useState<IndexSparklines>({})
   const [etfs, setEtfs] = useState<EtfQuote[]>([])
   const [chart, setChart] = useState<ChartPoint[]>([])
   const [movers, setMovers] = useState<Movers>({ gainers: [], losers: [] })
@@ -20,13 +22,15 @@ export default function Dashboard() {
     const load = async () => {
       setLoading(true)
       try {
-        const [indicesRes, etfsRes, chartRes, moversRes] = await Promise.all([
+        const [indicesRes, sparklinesRes, etfsRes, chartRes, moversRes] = await Promise.all([
           apiClient.get('/market/indices'),
+          apiClient.get('/market/index-sparklines'),
           apiClient.get('/market/top-etfs'),
           apiClient.get(`/market/chart?symbol=SPY&period=${period}`),
           apiClient.get('/market/movers'),
         ])
         setIndices(indicesRes.data)
+        setSparklines(sparklinesRes.data)
         setEtfs(etfsRes.data)
         setChart(chartRes.data)
         setMovers(moversRes.data)
@@ -62,25 +66,8 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
-      {/* ── Section 1: Market Overview ── */}
-      <h2 className={styles.sectionTitle}>Market Overview</h2>
-      <div className={styles.indicesGrid}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={`${styles.indexCard} ${styles.skeleton} ${styles.skeletonCard}`} />
-            ))
-          : indices.map((idx) => (
-              <div key={idx.symbol} className={styles.indexCard}>
-                <span className={styles.indexName}>{idx.name}</span>
-                <span className={styles.indexPrice}>
-                  {idx.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </span>
-                <span className={`${styles.indexChange} ${idx.change >= 0 ? styles.up : styles.down}`}>
-                  {formatChange(idx.change, idx.changePct)}
-                </span>
-              </div>
-            ))}
-      </div>
+      {/* ── Section 1: Market Overview (Ticker Bar) ── */}
+      <IndexTickerBar indices={indices} sparklines={sparklines} isLoading={loading} />
 
       {/* ── Section 2: Chart + ETF Ranking (two columns) ── */}
       <div className={styles.columns}>

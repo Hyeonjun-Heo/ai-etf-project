@@ -12,40 +12,7 @@
   margin-bottom: 16px;
 }
 
-/* ── Market Overview (index cards) ─────────── */
-.indicesGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.indexCard {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.indexName {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.indexPrice {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.indexChange {
-  font-size: 13px;
-  font-weight: 600;
-}
-
+/* ── Color helpers ────────────────────────── */
 .up {
   color: var(--color-success);
 }
