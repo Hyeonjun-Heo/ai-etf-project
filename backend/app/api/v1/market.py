@@ -5,6 +5,7 @@ from app.services.market_service import (
     get_index_sparklines,
     get_indices,
     get_movers,
+    get_ranking,
     get_stock_detail,
     get_top_etfs,
 )
@@ -38,6 +39,15 @@ async def chart(
 @router.get("/movers")
 async def movers():
     return get_movers()
+
+
+@router.get("/ranking")
+async def ranking(
+    sort: str = Query("amount", pattern="^(amount|volume|rise|fall)$"),
+    category: str = Query("domestic", pattern="^(all|domestic|overseas)$"),
+    limit: int = Query(100, ge=1, le=100),
+):
+    return get_ranking(sort, category, limit)
 
 
 @router.get("/stock/{symbol}")

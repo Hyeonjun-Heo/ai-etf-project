@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
 
+    # KIS 실전계좌 (시세 조회 / 실전 거래용)
+    KIS_REAL_APP_KEY: str = ""
+    KIS_REAL_APP_SECRET: str = ""
+    KIS_REAL_ACCOUNT: str = ""
+
+    # KIS 모의투자계좌 (가상 매매용)
+    KIS_APP_KEY: str = ""
+    KIS_APP_SECRET: str = ""
+    KIS_ACCOUNT: str = ""
+    KIS_HTS_ID: str = ""
+    KIS_VIRTUAL: bool = False
+
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
