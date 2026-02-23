@@ -38,6 +38,18 @@ export interface IndexSparklineData {
 
 export type IndexSparklines = Record<string, IndexSparklineData>
 
+export interface RankingItem {
+  symbol: string
+  name: string
+  price: number
+  change: number
+  changePct: number
+  volume: number | null
+  amount: number | null
+  exchange?: string
+  market?: 'domestic' | 'overseas'
+}
+
 export interface StockDetail {
   symbol: string
   name: string
