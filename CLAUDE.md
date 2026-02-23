@@ -45,11 +45,30 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - `get_current_user` — returns `User | None` (optional auth, for public endpoints that behave differently when logged in)
 - `require_current_user` — wraps `get_current_user`, raises 401 if None (use for protected endpoints)
 
+**Health endpoint** (`api/v1/health.py`): `GET /health` — liveness check.
+
 **Auth endpoints** (`api/v1/auth.py`): `POST /register`, `POST /login`, `POST /refresh`, `GET /me`, `GET /check-username`
 
-**Market data** (`data/market_data.py`): yfinance wrapper with in-memory TTL cache (5 min). Provides indices, top ETFs, chart history, and market movers.
+**Market endpoints** (`api/v1/market.py`):
+- `GET /market/indices` — 국내(KOSPI, KOSDAQ) + 해외 지수 목록
+- `GET /market/index-sparklines` — 지수별 당일 스파크라인 데이터
+- `GET /market/top-etfs` — 상위 ETF 목록
+- `GET /market/chart?symbol=&period=` — 종목 차트 (period: 1d|1w|1mo|3mo|6mo|1y)
+- `GET /market/movers` — 등락률 상위/하위 5종목
+- `GET /market/ranking?sort=&category=&excd=&limit=` — 실시간 랭킹 (sort: amount|volume|rise|fall, category: domestic_stock|domestic_etf|overseas, excd: NAS|NYS for overseas)
+- `GET /market/stock/{symbol}` — 종목 상세 정보
 
-**Config**: `core/config.py` uses pydantic-settings, reads from `backend/.env`. Key vars: `SECRET_KEY`, `OPENAI_API_KEY`, `DATABASE_URL`.
+**Market data** (`data/market_data.py`): KIS OpenAPI wrapper via `python-kis`. In-memory TTL cache (5 min general, 1 min for sparklines due to KIS token rate limit).
+- **국내 지수**: KOSPI(`0001`), KOSDAQ(`1001`) — KIS `FHPUP02100000` TR
+- **해외 지수**: NASDAQ(`COMP`), S&P500(`SPX`), 다우존스(`DJI`) — KIS `FHKST03030200` TR; VIX — Yahoo Finance v8 API; USD/KRW — KIS `FHKST03030100` 우선, 실패 시 Yahoo Finance 폴백
+- **스파크라인**: 국내 지수는 프록시 ETF 사용 (`INDEX_SPARKLINE_PROXY`: 코스피→069500 KODEX 200, 코스닥→229200 KODEX 코스닥150), 해외는 Yahoo Finance 5분봉
+- **랭킹**: 거래대금/거래량 순위는 `FHPST01710000` TR, 등락률 순위는 `FHPST01700000` TR
+
+**KIS client** (`data/kis_client.py`): PyKis singleton (`get_kis()`). Supports three modes: real-only, virtual-only, or real+virtual simultaneously (real domain for market data, virtual domain for paper trading). Initialized lazily on first call. Uses `keep_token=True` to cache tokens to disk and avoid the 1-minute rate limit on token issuance.
+
+**Config**: `core/config.py` uses pydantic-settings, reads from `backend/.env`. Key vars: `SECRET_KEY`, `OPENAI_API_KEY`, `DATABASE_URL`. KIS vars: `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ACCOUNT`/`KIS_HTS_ID`/`KIS_VIRTUAL` (모의투자), `KIS_REAL_APP_KEY`/`KIS_REAL_APP_SECRET`/`KIS_REAL_ACCOUNT` (실전). No `.env.example` exists — create one when onboarding new developers.
+
+**Models naming note**: `models/user.py` = SQLAlchemy ORM model; `models/auth.py` = Pydantic request/response schemas. The folder mixes both kinds — do not assume everything in `models/` is an ORM model.
 
 ### Frontend (React + Vite)
 
@@ -59,6 +78,8 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 
 **State**: Zustand stores (`stores/`) for client state (currently `authStore`). TanStack Query for server state.
 
+**Component structure**: `components/common/` (TopNav, ProtectedRoute, IndexTickerBar, RealTimeRanking), `components/charts/` (MarketChart, MiniLineChart), `components/chat/` (placeholder — AI coach), `components/hooks/` (placeholder — custom hooks).
+
 **Styling**: CSS Modules per component + global design tokens in `styles/global.css`. Key tokens:
 - Backgrounds: `--bg-primary: #020617`, `--bg-secondary: #111827`
 - Text: `--text-primary: #e5e7eb`, `--text-secondary: #9ca3af`
@@ -66,14 +87,14 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - Border: `--border-default: #374151`
 - Border radius: `--radius-lg: 16px` (cards)
 
-**Types**: Shared TypeScript interfaces in `types/` (`auth.ts`, `market.ts`).
+**Types**: Shared TypeScript interfaces in `types/` (`auth.ts`, `market.ts`). Note: `StockDetail` type in `market.ts` includes fields (`sector`, `industry`, `longBusinessSummary`, `avgVolume`, `dividendYield`) not yet returned by the backend — these are placeholders for future implementation.
 
 ### Tech Stack
 
 | Layer | Stack |
 |-------|-------|
 | Frontend | React 19, TypeScript 5.9, Vite 6, React Router v7, Zustand 5, TanStack Query 5, Axios, Recharts 3 |
-| Backend | FastAPI, SQLAlchemy 2.0, Pydantic 2, python-jose (JWT), bcrypt, yfinance |
+| Backend | FastAPI, SQLAlchemy 2.0, Alembic, Pydantic 2, python-jose (JWT), bcrypt, python-kis (KIS OpenAPI) |
 | DB | SQLite (dev) → PostgreSQL (prod) |
 | AI | OpenAI API (for AI agent coach — planned) |
 
@@ -88,10 +109,10 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 
 ### Completed
 - Auth system: register, login, JWT refresh, `/me` endpoint
-- Market data API: indices (S&P 500, NASDAQ, Dow, VIX), top ETFs, chart history, market movers
-- Dashboard page: market overview cards, SPY chart with period selector, ETF ranking table, movers with tab switching, skeleton loading
+- Market data API (KIS OpenAPI): 국내 지수(KOSPI/KOSDAQ) + 해외 지수(NASDAQ/S&P500/DJI/VIX/USD환율), top Korean ETFs, intraday sparklines, chart history, market movers (gainers/losers), real-time ranking
+- Dashboard page: market overview cards, index chart with period selector, ETF ranking table, movers with tab switching, skeleton loading
 - Login & Register pages with form validation
-- Stock detail page scaffold (`/stock/:symbol`)
+- Stock detail page (`/stock/:symbol`) + backend `GET /market/stock/{symbol}` endpoint
 
 ### Next Up
 - Phase 1: Stock/ETF detail page (chart, stats, company overview), search with autocomplete, watchlist
@@ -127,7 +148,7 @@ Backend:
 - services/ → business logic
 - models/ → SQLAlchemy models
 - db/ → session & Base
-- data/ → external APIs (yfinance)
+- data/ → external APIs (KIS OpenAPI via python-kis)
 
 Frontend:
 - api/ → Axios client only
