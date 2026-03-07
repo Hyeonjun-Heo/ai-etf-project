@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Backend — Python venv lives at project root .venv/ (not inside backend/)
 cd backend
 ../.venv/Scripts/pip install -r requirements.txt
-../.venv/Scripts/uvicorn app.main:app --reload --port 8000
+../.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
 
 # Frontend
 cd frontend
@@ -24,8 +24,34 @@ npm run lint         # eslint .
 
 - Vite proxy forwards `/api` → `http://127.0.0.1:8000` (configured in `frontend/vite.config.ts`)
 - Swagger docs: `http://localhost:8000/docs`
-- SQLite DB auto-created on first backend startup via `Base.metadata.create_all` in lifespan
+- SQLite DB (`backend/app.db`) auto-created on first backend startup via `Base.metadata.create_all` in lifespan
 - No test framework is set up yet (no pytest config, no vitest/jest)
+
+## Environment Setup
+
+`backend/.env` is required (no `.env.example` exists). Minimum required fields:
+
+```dotenv
+SECRET_KEY=change-this-in-production
+
+# KIS 모의투자계좌 (paper trading / market data fallback)
+KIS_APP_KEY=
+KIS_APP_SECRET=
+KIS_ACCOUNT=         # format: XXXXXXXX-XX
+KIS_HTS_ID=
+KIS_VIRTUAL=true     # set false for real account
+
+# KIS 실전계좌 (real market data — better rate limits)
+KIS_REAL_APP_KEY=
+KIS_REAL_APP_SECRET=
+KIS_REAL_ACCOUNT=
+
+# Optional
+OPENAI_API_KEY=
+DATABASE_URL=sqlite:///./app.db
+```
+
+`keep_token=True` in `data/kis_client.py` caches KIS tokens to disk (avoids the 1-minute rate limit on token issuance). Token files are written to the `backend/` working directory.
 
 ## Git Workflow
 
@@ -53,10 +79,13 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - `GET /market/indices` — 국내(KOSPI, KOSDAQ) + 해외 지수 목록
 - `GET /market/index-sparklines` — 지수별 당일 스파크라인 데이터
 - `GET /market/top-etfs` — 상위 ETF 목록
-- `GET /market/chart?symbol=&period=` — 종목 차트 (period: 1d|1w|1mo|3mo|6mo|1y)
+- `GET /market/chart?symbol=&period=&excd=` — 종목 차트 (period: 1d|1w|1mo|3mo|6mo|1y). 1w/1mo는 1y 일봉을 반환하고 프론트에서 집계
 - `GET /market/movers` — 등락률 상위/하위 5종목
-- `GET /market/ranking?sort=&category=&excd=&limit=` — 실시간 랭킹 (sort: amount|volume|rise|fall, category: domestic_stock|domestic_etf|overseas, excd: NAS|NYS for overseas)
+- `GET /market/ranking?sort=&category=&limit=` — 실시간 랭킹 (sort: amount|volume|rise|fall, category: all|domestic|overseas)
+- `GET /market/search?q=` — 종목 검색 자동완성 (국내+해외, min 1자 max 50자)
 - `GET /market/stock/{symbol}` — 종목 상세 정보
+
+**Service layer** (`services/market_service.py`): Currently thin delegation to `data/market_data.py`. This is intentional — business logic (validation, transformation, caching policy) should accumulate here as features grow. Do not bypass it by calling `data/` directly from routers.
 
 **Market data** (`data/market_data.py`): KIS OpenAPI wrapper via `python-kis`. In-memory TTL cache (5 min general, 1 min for sparklines due to KIS token rate limit).
 - **국내 지수**: KOSPI(`0001`), KOSDAQ(`1001`) — KIS `FHPUP02100000` TR
@@ -66,19 +95,29 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 
 **KIS client** (`data/kis_client.py`): PyKis singleton (`get_kis()`). Supports three modes: real-only, virtual-only, or real+virtual simultaneously (real domain for market data, virtual domain for paper trading). Initialized lazily on first call. Uses `keep_token=True` to cache tokens to disk and avoid the 1-minute rate limit on token issuance.
 
-**Config**: `core/config.py` uses pydantic-settings, reads from `backend/.env`. Key vars: `SECRET_KEY`, `OPENAI_API_KEY`, `DATABASE_URL`. KIS vars: `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ACCOUNT`/`KIS_HTS_ID`/`KIS_VIRTUAL` (모의투자), `KIS_REAL_APP_KEY`/`KIS_REAL_APP_SECRET`/`KIS_REAL_ACCOUNT` (실전). No `.env.example` exists — create one when onboarding new developers.
+**Config**: `core/config.py` uses pydantic-settings, reads from `backend/.env`. Key vars: `SECRET_KEY`, `OPENAI_API_KEY`, `DATABASE_URL`. KIS vars: `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ACCOUNT`/`KIS_HTS_ID`/`KIS_VIRTUAL` (모의투자), `KIS_REAL_APP_KEY`/`KIS_REAL_APP_SECRET`/`KIS_REAL_ACCOUNT` (실전).
+
+**Database & Migrations**: Only one table currently (`users`). Alembic is installed but no migration files have been created yet. When adding new ORM models:
+```bash
+cd backend
+../.venv/Scripts/alembic revision --autogenerate -m "description"
+../.venv/Scripts/alembic upgrade head
+```
 
 **Models naming note**: `models/user.py` = SQLAlchemy ORM model; `models/auth.py` = Pydantic request/response schemas. The folder mixes both kinds — do not assume everything in `models/` is an ORM model.
 
 ### Frontend (React + Vite)
 
-**Routing** (`App.tsx`): Public routes (`/`, `/login`, `/register`) + protected routes wrapped in `<ProtectedRoute>` (`/portfolio`, `/backtest`, `/simulation`, `/settings`). TopNav hidden on auth pages.
+**Routing** (`App.tsx`): Public routes (`/`, `/login`, `/register`, `/stock/:symbol`) + protected routes wrapped in `<ProtectedRoute>` (`/portfolio`, `/backtest`, `/simulation`, `/settings`). TopNav hidden on auth pages.
+
+**Implemented pages**: `Dashboard`, `Login`, `Register`, `StockDetail`.
+**Scaffold-only placeholders**: `Portfolio`, `Backtest`, `Simulation`, `Settings` — these exist as route targets but contain no real functionality yet.
 
 **API client** (`api/client.ts`): Axios instance with `baseURL: '/api/v1'`. Auto-attaches JWT from localStorage. Response interceptor handles 401 → silent token refresh → retry failed requests (with queue for concurrent failures).
 
 **State**: Zustand stores (`stores/`) for client state (currently `authStore`). TanStack Query for server state.
 
-**Component structure**: `components/common/` (TopNav, ProtectedRoute, IndexTickerBar, RealTimeRanking), `components/charts/` (MarketChart, MiniLineChart), `components/chat/` (placeholder — AI coach), `components/hooks/` (placeholder — custom hooks).
+**Component structure**: `components/common/` (TopNav with search autocomplete, ProtectedRoute, IndexTickerBar, RealTimeRanking), `components/charts/` (MarketChart — Recharts AreaChart; CandleChart — `lightweight-charts` candlestick+volume with daily/weekly/monthly aggregation; MiniLineChart). `components/chat/` and `components/hooks/` are empty placeholder directories for future features.
 
 **Styling**: CSS Modules per component + global design tokens in `styles/global.css`. Key tokens:
 - Backgrounds: `--bg-primary: #020617`, `--bg-secondary: #111827`
@@ -87,13 +126,13 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - Border: `--border-default: #374151`
 - Border radius: `--radius-lg: 16px` (cards)
 
-**Types**: Shared TypeScript interfaces in `types/` (`auth.ts`, `market.ts`). Note: `StockDetail` type in `market.ts` includes fields (`sector`, `industry`, `longBusinessSummary`, `avgVolume`, `dividendYield`) not yet returned by the backend — these are placeholders for future implementation.
+**Types**: Shared TypeScript interfaces in `types/` (`auth.ts`, `market.ts`). `ChartPoint` includes optional OHLCV fields (`open`, `high`, `low`, `volume`) used by `CandleChart`. `StockDetail` includes fields (`sector`, `industry`, `longBusinessSummary`, `avgVolume`, `dividendYield`) that the backend may return as `null` for domestic symbols. `SearchResult` shape: `{ symbol, name, type: 'equity'|'etf', market: 'domestic'|'overseas', exchange }`.
 
 ### Tech Stack
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | React 19, TypeScript 5.9, Vite 6, React Router v7, Zustand 5, TanStack Query 5, Axios, Recharts 3 |
+| Frontend | React 19, TypeScript 5.9, Vite 6, React Router v7, Zustand 5, TanStack Query 5, Axios, Recharts 3, lightweight-charts 4 |
 | Backend | FastAPI, SQLAlchemy 2.0, Alembic, Pydantic 2, python-jose (JWT), bcrypt, python-kis (KIS OpenAPI) |
 | DB | SQLite (dev) → PostgreSQL (prod) |
 | AI | OpenAI API (for AI agent coach — planned) |
@@ -115,7 +154,7 @@ Entry point: `backend/app/main.py` → `create_app()` factory pattern.
 - Stock detail page (`/stock/:symbol`) + backend `GET /market/stock/{symbol}` endpoint
 
 ### Next Up
-- Phase 1: Stock/ETF detail page (chart, stats, company overview), search with autocomplete, watchlist
+- Phase 1 (remaining): watchlist (DB model + API + UI), dynamic Top ETF lookup (replace `KR_ETF_POOL` hardcode with KRX API)
 - Phase 2: AI portfolio recommendation (investment profile survey → OpenAI agent → allocation)
 - Phase 3: Backtesting engine (CAGR, MDD, Sharpe ratio, benchmark comparison)
 - Phase 4: Paper trading simulation (virtual account, trade execution, P&L tracking)
