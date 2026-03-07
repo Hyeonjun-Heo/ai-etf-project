@@ -6,6 +6,7 @@ from app.services.market_service import (
     get_indices,
     get_movers,
     get_ranking,
+    get_search,
     get_stock_detail,
     get_top_etfs,
 )
@@ -32,8 +33,10 @@ async def top_etfs(limit: int = Query(10, ge=1, le=20)):
 async def chart(
     symbol: str = Query("SPY"),
     period: str = Query("6mo"),
+    excd: str = Query(""),
+    interval: int = Query(10, ge=1, le=240),
 ):
-    return get_chart(symbol, period)
+    return get_chart(symbol, period, excd, interval)
 
 
 @router.get("/movers")
@@ -48,6 +51,11 @@ async def ranking(
     limit: int = Query(100, ge=1, le=100),
 ):
     return get_ranking(sort, category, limit)
+
+
+@router.get("/search")
+async def search(q: str = Query(..., min_length=1, max_length=50)):
+    return get_search(q)
 
 
 @router.get("/stock/{symbol}")

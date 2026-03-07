@@ -39,6 +39,37 @@
   color: var(--text-muted);
 }
 
+/* ── Currency toggle ─────────────────────── */
+.currencyToggle {
+  display: flex;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.currencyBtn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.currencyBtn:hover {
+  color: var(--text-primary);
+}
+
+.currencyBtnActive {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
 .priceSection {
   display: flex;
   align-items: baseline;

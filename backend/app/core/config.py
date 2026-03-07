@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
 
+    # Anthropic (Claude)
+    ANTHROPIC_API_KEY: str = ""
+
     # KIS 실전계좌 (시세 조회 / 실전 거래용)
     KIS_REAL_APP_KEY: str = ""
     KIS_REAL_APP_SECRET: str = ""

@@ -17,6 +17,11 @@ export interface EtfQuote {
 export interface ChartPoint {
   date: string
   close: number
+  open?: number
+  high?: number
+  low?: number
+  volume?: number
+  ts?: number   // epoch seconds (인트라데이 분봉용)
 }
 
 export interface Movers {
@@ -48,6 +53,32 @@ export interface RankingItem {
   amount: number | null
   exchange?: string
   market?: 'domestic' | 'overseas'
+}
+
+export interface LiveCandle {
+  time: string       // "HH:MM" (국내 1D) | "" (해외)
+  price: number
+  open: number
+  high: number
+  low: number
+  volume: number
+  change: number
+  changePct: number
+}
+
+export interface SearchResult {
+  symbol: string
+  name: string
+  type: 'equity' | 'etf'
+  market: 'domestic' | 'overseas'
+  exchange: string
+}
+
+export interface WatchlistItem {
+  symbol: string
+  name: string
+  market: 'domestic' | 'overseas'
+  added_at: string
 }
 
 export interface StockDetail {

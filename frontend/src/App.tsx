@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import RightSidebar from './components/common/RightSidebar'
 import TopNav from './components/common/TopNav'
 import Backtest from './pages/Backtest'
 import Dashboard from './pages/Dashboard'
@@ -26,17 +27,20 @@ export default function App() {
   return (
     <>
       {showNav && <TopNav />}
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/stock/:symbol" element={<StockDetail />} />
-        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
-        <Route path="/backtest" element={<ProtectedRoute><Backtest /></ProtectedRoute>} />
-        <Route path="/simulation" element={<ProtectedRoute><Simulation /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <div style={showNav ? { paddingRight: '52px' } : undefined}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/stock/:symbol" element={<StockDetail />} />
+          <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+          <Route path="/backtest" element={<ProtectedRoute><Backtest /></ProtectedRoute>} />
+          <Route path="/simulation" element={<ProtectedRoute><Simulation /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+      {showNav && <RightSidebar />}
     </>
   )
 }

@@ -15,6 +15,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -60,10 +61,123 @@
   font-weight: 600;
 }
 
+/* ── 검색 ── */
+
+.searchWrapper {
+  position: relative;
+  width: 260px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 7px 36px 7px 14px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+}
+
+.searchInput:focus {
+  border-color: var(--accent-blue);
+}
+
+.searchSpinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.dropdownItem:hover {
+  background: var(--bg-tertiary);
+}
+
+.dropdownName {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownSymbol {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.badgeDomestic {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+.badgeOverseas {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+/* ── 우측 영역 ── */
+
 .right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .loginBtn {
